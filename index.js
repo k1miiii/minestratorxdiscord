@@ -11,7 +11,7 @@ const config = {
   hashsupport: '' // Code 'support' du serveur par défaut
 };
 
-// Initialize Discord client
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -19,7 +19,7 @@ const client = new Client({
   ]
 });
 
-// Define slash commands for MineStrator API actions
+
 const commands = [
   new SlashCommandBuilder()
     .setName('list-servers')
@@ -61,10 +61,10 @@ const commands = [
         .setRequired(false))
 ];
 
-// Initialize REST client for command registration
+
 const rest = new REST({ version: '10' }).setToken(config.discordToken);
 
-// Register commands
+
 (async () => {
   try {
     console.log('🔄 Enregistrement des commandes slash...');
@@ -78,7 +78,7 @@ const rest = new REST({ version: '10' }).setToken(config.discordToken);
   }
 })();
 
-// MineStrator API function for actions (POST)
+
 async function sendMineStratorAction(action, hashsupport) {
   try {
     const params = new URLSearchParams();
@@ -106,7 +106,7 @@ async function sendMineStratorAction(action, hashsupport) {
   }
 }
 
-// MineStrator API function for GET requests
+
 async function fetchMineStratorData(endpoint, hashsupport = '') {
   try {
     const url = hashsupport
@@ -134,7 +134,7 @@ async function fetchMineStratorData(endpoint, hashsupport = '') {
   }
 }
 
-// Format server data for embeds
+
 function formatServerData(data, type) {
   if (!data || !Array.isArray(data) || data.length === 0) {
     return '❌ Aucune donnée disponible.';
@@ -165,7 +165,7 @@ function formatServerData(data, type) {
   return '❌ Type de données inconnu.';
 }
 
-// Handle slash commands
+
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -173,7 +173,7 @@ client.on('interactionCreate', async interaction => {
     const guild = await client.guilds.fetch(config.discordGuildId);
     const member = await guild.members.fetch(interaction.user.id);
 
-    // Check if user has founder role
+
     if (!member.roles.cache.has(config.roleFounderId)) {
       return interaction.reply({
         content: '⛔ Seuls les fondateurs peuvent utiliser cette commande.',
@@ -185,7 +185,7 @@ client.on('interactionCreate', async interaction => {
     let actionText, data;
 
     if (['start', 'stop', 'restart', 'kill'].includes(commandName)) {
-      // Handle action commands
+
       actionText = {
         start: 'Démarrage',
         stop: 'Arrêt',
@@ -216,7 +216,7 @@ client.on('interactionCreate', async interaction => {
           .setTimestamp()]
       });
     } else {
-      // Handle GET commands
+
       actionText = {
         'list-servers': 'Liste des Serveurs',
         'server-ressources': 'Ressources du Serveur'
@@ -263,7 +263,7 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// Bot ready event
+
 client.once('ready', () => {
   console.log(`✅ Connecté en tant que ${client.user.tag}`);
 });
