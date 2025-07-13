@@ -1,6 +1,6 @@
 # Bot Discord MineStrator
 
-Ce bot Discord interagit avec l'[API MineStrator](https://rest.minestrator.com) pour gérer des serveurs. Il permet de lister les serveurs, vérifier l'utilisation des ressources et effectuer des actions (démarrer, arrêter, redémarrer, terminer) sur les serveurs MineStrator. Les commandes sont réservées aux utilisateurs ayant un rôle spécifique de fondateur.
+Ce bot Discord interagit avec l'[API MineStrator](https://minestrator.com) pour gérer des serveurs. Il permet de lister les serveurs, vérifier l'utilisation des ressources et effectuer des actions (démarrer, arrêter, redémarrer, terminer) sur les serveurs MineStrator. Les commandes sont réservées aux utilisateurs ayant un rôle spécifique de fondateur.
 
 ## Fonctionnalités
 
