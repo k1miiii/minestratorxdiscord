@@ -1,14 +1,14 @@
 const { Client, GatewayIntentBits, SlashCommandBuilder, EmbedBuilder, REST, Routes } = require('discord.js');
-const fetch = require('node-fetch');
+const fetch = require('node-fetch').default;
 
 // Configuration
 const config = {
-  discordToken: 'blabla', // Remplacer par le token du bot Discord https://discord.com/developers/applications
-  discordClientId: '', // Remplacer par l'ID du client du bot
-  discordGuildId: '', // Remplacer par l'ID du serveur Discord
-  roleFounderId: '', // Remplacer par l'ID du rôle fondateur/owner
-  apiToken: '', // Remplacer par le token API MineStrator (https://minestrator.com/panel/modifier/mon/compte)
-  hashsupport: '' // Remplacer par le code 'support' du serveur
+  discordToken: '', // Token du bot Discord
+  discordClientId: '', // ID du client du bot
+  discordGuildId: '', // ID du serveur Discord
+  roleFounderId: '', // ID du rôle fondateur/owner
+  apiToken: '', // Token API MineStrator
+  hashsupport: '' // Code 'support' du serveur par défaut
 };
 
 // Initialize Discord client
@@ -25,38 +25,40 @@ const commands = [
     .setName('list-servers')
     .setDescription('Liste tous les serveurs MineStrator (fondateurs uniquement)'),
   new SlashCommandBuilder()
-    .setName('server-data')
-    .setDescription('Récupère les informations d’un serveur MineStrator (fondateurs uniquement)')
-    .addStringOption(opt =>
-      opt.setName('hashsupport')
-        .setDescription('Code support du serveur (ex: CR5YT)')
-        .setRequired(true)),
-  new SlashCommandBuilder()
     .setName('server-ressources')
     .setDescription('Récupère la consommation de ressources d’un serveur MineStrator (fondateurs uniquement)')
     .addStringOption(opt =>
       opt.setName('hashsupport')
-        .setDescription('Code support du serveur (ex: CR5YT)')
-        .setRequired(true)),
-  new SlashCommandBuilder()
-    .setName('server-content')
-    .setDescription('Récupère les informations de contenu d’un serveur MineStrator (fondateurs uniquement)')
-    .addStringOption(opt =>
-      opt.setName('hashsupport')
-        .setDescription('Code support du serveur (ex: CR5YT)')
+        .setDescription('Code support du serveur (ex: EF85L)')
         .setRequired(true)),
   new SlashCommandBuilder()
     .setName('start')
-    .setDescription('Démarre le serveur MineStrator (fondateurs uniquement)'),
+    .setDescription('Démarre le serveur MineStrator (fondateurs uniquement)')
+    .addStringOption(opt =>
+      opt.setName('hashsupport')
+        .setDescription('Code support du serveur (ex: EF85L, défaut: config)')
+        .setRequired(false)),
   new SlashCommandBuilder()
     .setName('stop')
-    .setDescription('Arrête le serveur MineStrator (fondateurs uniquement)'),
+    .setDescription('Arrête le serveur MineStrator (fondateurs uniquement)')
+    .addStringOption(opt =>
+      opt.setName('hashsupport')
+        .setDescription('Code support du serveur (ex: EF85L, défaut: config)')
+        .setRequired(false)),
   new SlashCommandBuilder()
     .setName('restart')
-    .setDescription('Redémarre le serveur MineStrator (fondateurs uniquement)'),
+    .setDescription('Redémarre le serveur MineStrator (fondateurs uniquement)')
+    .addStringOption(opt =>
+      opt.setName('hashsupport')
+        .setDescription('Code support du serveur (ex: EF85L, défaut: config)')
+        .setRequired(false)),
   new SlashCommandBuilder()
     .setName('kill')
     .setDescription('Termine immédiatement le serveur MineStrator (fondateurs uniquement)')
+    .addStringOption(opt =>
+      opt.setName('hashsupport')
+        .setDescription('Code support du serveur (ex: EF85L, défaut: config)')
+        .setRequired(false))
 ];
 
 // Initialize REST client for command registration
@@ -70,7 +72,7 @@ const rest = new REST({ version: '10' }).setToken(config.discordToken);
       Routes.applicationGuildCommands(config.discordClientId, config.discordGuildId),
       { body: commands.map(cmd => cmd.toJSON()) }
     );
-    console.log('✅ Commandes enregistrées : list-servers, server-data, server-ressources, server-content, start, stop, restart, kill.');
+    console.log('✅ Commandes enregistrées : list-servers, server-ressources, start, stop, restart, kill.');
   } catch (error) {
     console.error('[SLASH_COMMANDS] Erreur lors de l\'enregistrement:', error);
   }
@@ -120,7 +122,7 @@ async function fetchMineStratorData(endpoint, hashsupport = '') {
 
     if (response.ok) {
       const data = await response.json();
-      console.log(`[MINESTRATOR_API] Données récupérées pour ${endpoint}${hashsupport ? `/${hashsupport}` : ''}.`);
+      console.log(`[MINESTRATOR_API] Données récupérées pour ${endpoint}${hashsupport ? `/${hashsupport}` : ''}:`, JSON.stringify(data, null, 2));
       return data.data;
     } else {
       console.error(`[MINESTRATOR_API] Erreur lors de la récupération des données pour ${endpoint}${hashsupport ? `/${hashsupport}` : ''}:`, response.statusText);
@@ -140,51 +142,23 @@ function formatServerData(data, type) {
 
   if (type === 'list-servers') {
     return data.map(server => 
-      `**${server.hashsupport}** (${server.offer})\n` +
+      `**${server.hashsupport}** (${server.offer || 'Inconnu'})\n` +
       `- IP: ${server.ip}:${server.port}\n` +
-      `- DNS: ${server.dns}\n` +
-      `- Début: ${new Date(server.tstart).toLocaleDateString('fr-FR')}\n` +
-      `- Fin: ${new Date(server.tend).toLocaleDateString('fr-FR')}`
+      `- DNS: ${server.dns || 'N/A'}\n` +
+      `- Début: ${server.tstart ? new Date(server.tstart).toLocaleDateString('fr-FR') : 'N/A'}\n` +
+      `- Fin: ${server.tend ? new Date(server.tend).toLocaleDateString('fr-FR') : 'N/A'}`
     ).join('\n\n');
-  }
-
-  if (type === 'server-data') {
-    const server = data[0];
-    return (
-      `**${server.hashsupport}** (${server.offer})\n` +
-      `- IP: ${server.ip}:${server.port}\n` +
-      `- DNS: ${server.dns}\n` +
-      `- UUID: ${server.uuid_short_pt}\n` +
-      `- Début: ${new Date(server.tstart).toLocaleDateString('fr-FR')}\n` +
-      `- Fin: ${new Date(server.tend).toLocaleDateString('fr-FR')}\n` +
-      `- Ressources:\n` +
-      `  - CPU: ${server.ressources.cpu.core} cœurs (Flex: ${server.ressources.cpu.flexcore})\n` +
-      `  - RAM: ${server.ressources.memory.dedicated} MB${server.ressources.memory.bonus ? ` (+${server.ressources.memory.bonus} MB bonus)` : ''}\n` +
-      `  - Disque: ${server.ressources.disk.dedicated} MB\n` +
-      `  - Bases de données: ${server.ressources.databases.count} (${server.ressources.databases.dedicated} MB)`
-    );
   }
 
   if (type === 'server-ressources') {
     const server = data[0];
     return (
-      `**${server.hashsupport}** (${server.offer})\n` +
+      `**${server.hashsupport}** (${server.offer || 'Inconnu'})\n` +
       `- IP: ${server.ip}:${server.port}\n` +
       `- Statut: ${server.status === 'on' ? 'En ligne' : 'Hors ligne'}\n` +
-      `- CPU: ${server.cpu.live}% / ${server.cpu.max}%\n` +
-      `- RAM: ${server.memory.live} MB / ${server.memory.max} MB\n` +
-      `- Disque: ${server.disk.live} MB / ${server.disk.max} MB`
-    );
-  }
-
-  if (type === 'server-content') {
-    const server = data[0];
-    return (
-      `**${server.hashsupport}**\n` +
-      `- IP: ${server.ip}:${server.port}\n` +
-      `- Statut: ${server.status === 'on' ? 'En ligne' : 'Hors ligne'}\n` +
-      `- Joueurs: ${server.players.online} / ${server.players.max}\n` +
-      `- Version: ${server.version || 'Inconnue'}`
+      `- CPU: ${server.cpu?.live || 'N/A'}% / ${server.cpu?.max || 'N/A'}%\n` +
+      `- RAM: ${server.memory?.live || 'N/A'} MB / ${server.memory?.max || 'N/A'} MB\n` +
+      `- Disque: ${server.disk?.live || 'N/A'} MB / ${server.disk?.max || 'N/A'} MB`
     );
   }
 
@@ -208,7 +182,7 @@ client.on('interactionCreate', async interaction => {
     }
 
     const commandName = interaction.commandName;
-    let actionText, description, data;
+    let actionText, data;
 
     if (['start', 'stop', 'restart', 'kill'].includes(commandName)) {
       // Handle action commands
@@ -219,23 +193,25 @@ client.on('interactionCreate', async interaction => {
         kill: 'Termination'
       }[commandName];
 
+      const hashsupport = interaction.options.getString('hashsupport') || config.hashsupport;
+
       await interaction.reply({
         embeds: [new EmbedBuilder()
           .setTitle(`${actionText} du Serveur`)
-          .setDescription(`🚀 Envoi de la commande ${commandName} au serveur MineStrator...`)
+          .setDescription(`🚀 Envoi de la commande ${commandName} au serveur MineStrator (${hashsupport})...`)
           .setColor('#FFA500')
           .setTimestamp()],
         flags: 64
       });
 
-      const success = await sendMineStratorAction(commandName, config.hashsupport);
+      const success = await sendMineStratorAction(commandName, hashsupport);
 
       await interaction.editReply({
         embeds: [new EmbedBuilder()
           .setTitle(success ? `${actionText} Réussi` : `Échec du ${actionText}`)
           .setDescription(success
-            ? `✅ La commande ${commandName} a été exécutée avec succès pour ${config.hashsupport}.`
-            : `❌ Échec de l'envoi de la commande ${commandName}. Vérifiez le token API ou le code support.`)
+            ? `✅ La commande ${commandName} a été exécutée avec succès pour ${hashsupport}.`
+            : `❌ Échec de l'envoi de la commande ${commandName} pour ${hashsupport}. Vérifiez le token API ou le code support.`)
           .setColor(success ? '#00FF00' : '#FF0000')
           .setTimestamp()]
       });
@@ -243,9 +219,7 @@ client.on('interactionCreate', async interaction => {
       // Handle GET commands
       actionText = {
         'list-servers': 'Liste des Serveurs',
-        'server-data': 'Données du Serveur',
-        'server-ressources': 'Ressources du Serveur',
-        'server-content': 'Contenu du Serveur'
+        'server-ressources': 'Ressources du Serveur'
       }[commandName];
 
       await interaction.reply({
@@ -260,9 +234,7 @@ client.on('interactionCreate', async interaction => {
       let endpoint;
       let hashsupport = commandName !== 'list-servers' ? interaction.options.getString('hashsupport') : '';
       if (commandName === 'list-servers') endpoint = 'list';
-      else if (commandName === 'server-data') endpoint = 'data';
       else if (commandName === 'server-ressources') endpoint = 'ressources';
-      else if (commandName === 'server-content') endpoint = 'content';
 
       data = await fetchMineStratorData(endpoint, hashsupport);
 
