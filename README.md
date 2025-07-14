@@ -136,6 +136,12 @@ Ce bot Discord interagit avec l'[API MineStrator](https://minestrator.com) pour 
   - Vérifiez les journaux de la console pour les erreurs `[MINESTRATOR_API]` ou `[INTERACTION]`.
   - Partagez les journaux, notamment les réponses API (ex. : `[MINESTRATOR_API] Données récupérées pour ressources/: {...}`), pour un débogage supplémentaire.
 
+## Ce que je souhaite améliorer 
+
+-- Ajouter des connection RCON ( support minecraft/garry's mod /dayz(battleeye) ect ) pour avoir des playerlist et pouvoir interagir avec le serveur
+-- Afficher le nombre de joueurs connectés sur le status du bot 
+
+
 ## Notes de Sécurité
 
 - **Identifiants Codés en Dur** : Le bot utilise des valeurs `config` codées en dur. Ne partagez jamais `discordToken` ou `apiToken`. Régénérez-les en cas d'exposition.
